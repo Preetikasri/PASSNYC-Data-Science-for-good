@@ -1,4 +1,3 @@
-
 ## set your working directory to the local difrectory where you have PASSNYC data
 ## Calculating correlation btw first 10 columns of the dataset. 
 
