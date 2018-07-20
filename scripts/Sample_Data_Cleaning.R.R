@@ -45,3 +45,36 @@ summary(df_for_corr)
 corr_mat = cor(df_for_corr)
 
 
+### new addition
+
+## cleaning the major dataframe
+major_cities = c("NEW YORK" ,"BRONX","BROOKLYN","STATEN ISLAND")
+df_major_cities = df_expl[(df_expl$City %in% major_cities),] ## Main dataframe '2016 explorer... '
+
+cols_to_clean = c( "Rigorous.Instruction..", "Collaborative.Teachers.." ,
+                  "Supportive.Environment..", "Trust..",
+                  "Strong.Family.Community.Ties..", "Effective.School.Leadership.."
+                  )
+
+for (j in cols_to_clean)
+{
+  df_major_cities[,j] = (as.character(df_major_cities[,j])) ## Converting from factor to character
+  #Removing any non-numeric character from 'School Income Estimate' column
+  df_major_cities[,j] = as.numeric(gsub("[^0-9\\.]", "", df_major_cities[,j]) ) #Regular expression
+  df_major_cities[, j]= as.numeric(sub("%","",df_major_cities[,j]))/100
+}
+
+
+#plot(df_major_cities$Effective.School.Leadership.., df_major_cities$Economic.Need.Index)
+
+
+idx = ((df_major_cities$Economic.Need.Index >= 0.7)&(df_major_cities$Collaborative.Teachers.. >= 0.85)
+  &(df_major_cities$Supportive.Environment.. >= 0.85)&(df_major_cities$Trust.. >= 0.85)
+  &(df_major_cities$Strong.Family.Community.Ties.. >= 0.85)&(df_major_cities$Effective.School.Leadership.. >= 0.85)&(df_major_cities$Rigorous.Instruction.. >= 0.85))
+ #sum(idx)
+
+
+df_high_ENI = df_major_cities[idx, ]
+
+ggplot(data = melt_test, aes(x=Percentage, y= value),
+       main ="Ethinicities distributed across ") + geom_boxplot(aes())
