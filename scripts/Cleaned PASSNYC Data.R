@@ -164,5 +164,29 @@ dummy_high_eni <- type.convert(df_major_cities$Economic.Need.Index)
 ## Run Classification Models on Dummy Variable for Economic Need Index
 library(kknn)
 n <- dim(df_major_cities)[1]
-plot(df_major_cities$Percent.Black...Hispanic, df_major_cities$Economic.Need.Index.Dummy)
 plot(df_major_cities$Percent.Black...Hispanic, df_major_cities$Economic.Need.Index)
+plot(df_major_cities$Percent.Black...Hispanic, df_major_cities$Economic.Need.Index)
+
+train <- data.frame(df_major_cities$Percent.Black...Hispanic ,df_major_cities$Economic.Need.Index)
+test <- data.frame(df_major_cities$Percent.Black...Hispanic ,df_major_cities$Economic.Need.Index)
+
+MSE <- NULL
+kk <- c(2,10,50,100,150,200,250,900)
+
+for(i in kk){
+  
+  near = kknn(df_major_cities$Economic.Need.Index~df_major_cities$Percent.Black...Hispanic,train,test,k=i,kernel = "rectangular")
+  aux = mean((test[,2]-near$fitted)^2)
+  
+  MSE = c(MSE,aux)
+  
+  plot(df_major_cities$Percent.Black...Hispanic,df_major_cities$Economic.Need.Index,main=paste("k=",i),pch=19,cex=0.8,col="darkgray")
+  lines(test[,1],near$fitted,col=2,lwd=2)
+  cat ("Press [enter] to continue")
+  line <- readline()
+}
+
+plot(log(1/kk),sqrt(MSE),type="b",xlab="Complexity (log(1/k))",col="blue",ylab="RMSE",lwd=2,cex.lab=1.2)
+text(log(1/kk[1]),sqrt(MSE[1])+0.3,paste("k=",kk[1]),col=2,cex=1.2)
+text(log(1/kk[10])+0.4,sqrt(MSE[10]),paste("k=",kk[10]),col=2,cex=1.2)
+text(log(1/kk[5])+0.4,sqrt(MSE[5]),paste("k=",kk[5]),col=2,cex=1.2)
