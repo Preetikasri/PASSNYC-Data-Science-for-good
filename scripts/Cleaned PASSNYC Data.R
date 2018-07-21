@@ -154,3 +154,11 @@ df_major_cities$Effective.School.Leadership.. <- as.numeric(sub("%","",df_major_
 df_major_cities$Strong.Family.Community.Ties.. <- as.numeric(sub("%","",df_major_cities$Strong.Family.Community.Ties..))/100
 df_major_cities$Trust.. <- as.numeric(sub("%","",df_major_cities$Trust..))/100
 
+## Create Dummy Variable for Economic Need Index
+dummy_high_eni <- type.convert(df_major_cities$Economic.Need.Index)
+dummy_high_eni[dummy_high_eni>=0.70] <- 1
+dummy_high_eni[dummy_high_eni<0.70] <- 0
+df_major_cities$Economic.Need.Index.Dummy <- dummy_high_eni
+dummy_high_eni <- type.convert(df_major_cities$Economic.Need.Index)
+
+## Run Classification Models on Dummy Variable for Economic Need Index
