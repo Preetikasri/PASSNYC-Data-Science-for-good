@@ -156,9 +156,13 @@ df_major_cities$Trust.. <- as.numeric(sub("%","",df_major_cities$Trust..))/100
 
 ## Create Dummy Variable for Economic Need Index
 dummy_high_eni <- type.convert(df_major_cities$Economic.Need.Index)
-dummy_high_eni[dummy_high_eni>=0.70] <- 1
-dummy_high_eni[dummy_high_eni<0.70] <- 0
+dummy_high_eni[dummy_high_eni>=0.85] <- 1
+dummy_high_eni[dummy_high_eni<0.85] <- 0
 df_major_cities$Economic.Need.Index.Dummy <- dummy_high_eni
 dummy_high_eni <- type.convert(df_major_cities$Economic.Need.Index)
 
 ## Run Classification Models on Dummy Variable for Economic Need Index
+library(kknn)
+n <- dim(df_major_cities)[1]
+plot(df_major_cities$Percent.Black...Hispanic, df_major_cities$Economic.Need.Index.Dummy)
+plot(df_major_cities$Percent.Black...Hispanic, df_major_cities$Economic.Need.Index)
