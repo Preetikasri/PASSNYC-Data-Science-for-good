@@ -83,6 +83,9 @@ keep_only_oneY = function(df, y_variable_str = "AverageELAProficiency")
 }
 
 
+
+
+
 ## data Preperation for models
 data_prep = function(traindata, testdata, formula_y){
   train.mat = model.matrix(formula_y, data = train)
@@ -104,16 +107,36 @@ regularised_regression = function(input_train_modelmatrix,train_data_y, Type = "
   
   reg.fit = glmnet(input_train_modelmatrix, train_data_y, alpha = alpha_taken )
   cv.reg = cv.glmnet(input_train_modelmatrix, train_data_y, alpha = alpha_taken)
-  return (cv.reg)
+  
+  objs = list(reg.fit, cv.reg)
+  return (objs)
 }
 
 ## Predicting values and output RMSE
-predict_regularised_reg = function(input_train_modelmatrix, input_test_modelmatrix, Type_taken="LASSO"){
-  mod = regularised_regression(input_train_modelmatrix, Type = Type_taken)
+Fit_regularised_reg = function(input_train_modelmatrix, input_test_modelmatrix,train_data_y, Type_taken="LASSO"){
+  mod = regularised_regression(input_train_modelmatrix, train_data_y ,  Type = Type_taken)
   best.lam = mod$lambda.min
   
   yht = predict(mod, s= best.lam, newx = input_test_modelmatrix )
   return (yht)
+}
+
+## Fit regression after choosing vars from LASSO/Ridge
+
+run_regression_variables_regularised = function(object, traindata, testdata, formulataken){
+  
+  lasso.fit = object[[1]]
+  lasso.cv = object[[2]]
+  best.lambda = lasso.cv$lambda.min
+  
+  vars_lasso = coef(lasso.fit, s = best.lambda)
+  d_coefs = data.frame(name = vars_lasso@Dimnames[[1]][vars_lasso@i + 1], coefficient = vars_lasso@x)
+  lassRegr = lm(formulataken, data = traindata[, d_coefs$name])
+  yhat = predict(lassRegr, testdata[, d_coefs$name])
+  rmse = RMSE_calculator(yhat, testdata$AverageELAProficiency)
+  print(paste("RMSE for Lasso is ", rmse, sep = ":"))
+  return (lassRegr)
+  
 }
 
 ## Calculating RMSE
@@ -124,7 +147,8 @@ RMSE_calculator = function(predicted_y, True_y){
 
 ## Data prep for forward regr
 #vars_going_Nan =
-stepwise_regr = function(train_data, train_data_matrix, dir = "both", target_name = "AverageELAProficiency"){
+stepwise_regr = function(train_data, train_data_matrix, dir = "both", target_name = "AverageELAProficiency", scaling = F){
+  if(scaling){
   scaled_data = scale(train_data_matrix)
   badcols = vector()
   for (i in 1:ncol(scaled_data))
@@ -137,7 +161,13 @@ stepwise_regr = function(train_data, train_data_matrix, dir = "both", target_nam
     }
   }
    mod_df = data.frame(scaled_data[, -badcols], train_data$AverageELAProficiency) ## TO DO
-   colnames(mod_df)[ncol(mod_df)] = target_name
+  }
+  else
+  {
+    mod_df = data.frame(train_data_matrix, train_data$AverageELAProficiency)
+  }
+   
+  colnames(mod_df)[ncol(mod_df)] = target_name
    
    null = lm(AverageELAProficiency~1, data= mod_df)
    full = lm(AverageELAProficiency~., data= mod_df)
@@ -146,8 +176,9 @@ stepwise_regr = function(train_data, train_data_matrix, dir = "both", target_nam
    return (regForward)
 }
 
-Fit_stepwise = function(train_data, train_data_matrix, model)
+Fit_stepwise = function(train_y, test_y,test_data_matrix, train_data_matrix, model, scaling = F)
 {
+  if(scaling) {
   scaled_data = scale(train_data_matrix)
   badcols = vector()
   for (i in 1:ncol(scaled_data))
@@ -160,73 +191,22 @@ Fit_stepwise = function(train_data, train_data_matrix, model)
     }
   }
   mod_df = data.frame(scaled_data[, -badcols], train_data$AverageELAProficiency)
+  }
+  else
+  {
+    mod_df = data.frame(train_data_matrix, train_y)
+  }
   colnames(mod_df)[ncol(mod_df)] = "AverageELAProficiency"
   
   formula_used = formula(model)
   
   ForwRegr = lm(formula_used, data = mod_df)
+  yhat = predict(ForwRegr, data.frame(test_data_matrix))
+  rmse = RMSE_calculator(yhat,test_y )
+  
+  print(paste("RMSE for stepwise is ", rmse, sep = ":"))
   return (ForwRegr)
 }
 
-
-### Executing each function defined above
-df_exp = parse_csv(path, filename)
-df_exp = col_names_clean(df_exp)
-#cols_to_clean : yet to define
-cols_to_clean = c( "PercentELL",
-"PercentAsian",
-"PercentBlack",
-"PercentHispanic",
-"PercentBlackHispanic",
-"PercentWhite",
-"RigorousInstruction", "CollaborativeTeachers" ,
-"SupportiveEnvironment", "Trust",
-"StrongFamilyCommunityTies", "EffectiveSchoolLeadership",
-"StudentAttendanceRate",
-"PercentofStudentsChronicallyAbsent", "SchoolIncomeEstimate"
-)
-df_exp = clean_the_data(df_exp, cols_to_clean)
-df_exp = Remove_NA(df_exp)
-
-
-## Cleaning for Non-String NAs 
-df = as.data.frame(df_exp)
-df_exp= df_exp[(df_exp$AverageELAProficiency != 'N/A'), ] ## Remove NA values written as 'N/A'
-df_exp= df_exp[(df_exp$AverageMathProficiency != 'N/A'), ] ## Remove NA values written as 'N/A'
-df_exp= df_exp[(df_exp$SchoolIncomeEstimate != 'N/A'), ]
-
-df_exp$EconomicNeedIndex = as.numeric(as.character(df_exp$EconomicNeedIndex))
-df_exp$AverageELAProficiency= as.numeric(as.character(df_exp$AverageELAProficiency))
-df_exp$AverageMathProficiency= as.numeric(as.character(df_exp$AverageMathProficiency))
-
-df_exp = filter_top_cities(df_exp)
-
-## Creating train and test
-sample_size = 500
-tr = sample(1:nrow(df_exp), sample_size)
-train = df_exp[tr, ]
-test = df_exp[-tr,]
-
-#predictors = c(1,2,3....)
-
-data_list = data_prep(train, test, formula(AverageELAProficiency~.))
-train.mat = as.data.frame(data_list[[1]])
-test.mat = as.data.frame(data_list[[2]])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### End of Script ###
 
