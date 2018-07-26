@@ -11,6 +11,7 @@ library(randomForest)
 library(e1071)
 library(ggmap)
 library(ggplot2)
+library(reshape2)
 
 ## Loading the dataset which has already been cleaned and unncesearry columns have been dropped .
 ## To see the details please view preprocessing.R in previous folder
