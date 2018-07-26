@@ -27,8 +27,9 @@ df_exp$AverageELAProficiency= as.numeric(as.character(df_exp$AverageELAProficien
 df_exp$AverageMathProficiency= as.numeric(as.character(df_exp$AverageMathProficiency))
 
 df_exp = filter_top_cities(df_exp)
+## Till here it's cleaned data
 ## Keeping only AverageELA as y 
-df_exp = keep_only_oneY(df_exp)
+df_exp = keep_only_oneY(df_exp, y_variable_str = "EconomicNeedIndex")
 
 ## Some extra cleaning required on inspection
 # df_exp = df_exp[, -c(1:3)]
@@ -50,16 +51,18 @@ for (col in 1:length(cols_not_needed)){
 }
 
 df_model = df_exp[, -vec]
+set.seed(222)
 tr = sample(1:nrow(df_model), 500)
 train = df_model[tr, ]
 test = df_model[-tr,]
 
-data_list = data_prep(train, test, formula(AverageELAProficiency~.))
+data_list = data_prep(train, test, formula(EconomicNeedIndex~.))
 train.mat = (data_list[[1]])
 test.mat = (data_list[[2]])
 
 #lasso_fit = regularised_regression(train.mat, train$AverageELAProficiency)
 Lasso_ob = regularised_regression(train.mat, train$AverageELAProficiency)
+
 
 lass_final_model = run_regression_variables_regularised(Lasso_ob, train, test, formula(AverageELAProficiency~.))
 
