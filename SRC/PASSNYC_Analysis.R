@@ -62,6 +62,9 @@ ggplot(data = dm, aes(x=Ethnicity, y=value.y),
 ## Now begins the modeling part
 ## We've tried other models as well(Ridge, LASSO), but closed on Random Forest(We have our reasons to back that!!) 
 ## Please view preprocessing.R and steps.R to get the details of other models, if interested. 
+
+## Drop Off the School Name as it hinders in the modeling
+df_model = df_model[, -1]
 set.seed(222)
 sample_size = 500
 tr = sample(1:nrow(df_model), sample_size)
@@ -75,14 +78,22 @@ i = grep("AverageELAProficiency", colnames(df_model))
 j = grep("EconomicNeedIndex", colnames(df_model))
 vec = c(i,j)
 
+## Helper function to calculate RMSE
+
+RMSE_calculator = function(predicted_y, True_y){
+  rmse_cal = rmse(predicted_y, True_y)
+  return (rmse_cal)
+}
+
 ## Helper function to run the random forest with best parameters out of CV tuning
-runRF_best_params = function(formulataken, traindata, test_y_variable, mtry = 70, ntree = 500){
+runRF_best_params = function(formulataken, traindata, testdata, test_y_variable, mtry = 70, ntree = 500){
   bag.expl= randomForest( formulataken ,data=traindata,importance =TRUE, mtry = mtry, ntree = ntree)
-  yhat.bag.bestmtry = predict(bag.expl , newdata = test )
+  yhat.bag.bestmtry = predict(bag.expl , newdata = testdata )
   rmse = RMSE_calculator(yhat.bag.bestmtry, test_y_variable)
   print(rmse)
   return (bag.expl)
 }
+
 
 ## Cross validation- 3 folds, and Hyperparameter Tuning for ENI 
 rf_obj_ENI = tune.randomForest(x = train[, -vec], y = train$EconomicNeedIndex,
@@ -93,9 +104,9 @@ best.rf = rf_obj_ENI$best.parameters
 print("Best model for ENI Random Forest is as: ")
 rf_obj_ENI$best.model
 ## Training the model using best parameters 
-ENI.final.model = runRF_best_params(formula(EconomicNeedIndex~.), train, test$EconomicNeedIndex, 
-                                    mtry = rf_obj_ENI$best.parameters[1],
-                                    ntree = best.parameters[2])
+ENI.final.model = runRF_best_params(formula(EconomicNeedIndex~.), train[, -i],test[, -i] ,test$EconomicNeedIndex, 
+                                    mtry = as.integer(rf_obj_ENI$best.parameters[1]),
+                                    ntree = as.integer(rf_obj_ENI$best.parameters[2]))
 ## Cross validation -3 folds, and Hyperparameter tuning for ELA
 rf_obj_ELA = tune.randomForest(x = train[, -vec], y = train$EconomicNeedIndex,
                                mtry= c(40,60,70,100), ntree = c(100,500,1000),
@@ -105,9 +116,9 @@ best.rf = rf_obj_ELA$best.parameters
 print("Best model for ELA Random Forest is as: ")
 rf_obj_ELA$best.model
 ## Training the model using best parameters 
-ELA.final.model = runRF_best_params(formula(AverageELAProficiency~.), train, test$AverageELAProficiency, 
-                                    mtry = rf_obj_ELA$best.parameters[1],
-                                    ntree = best.parameters[2])
+ELA.final.model = runRF_best_params(formula(AverageELAProficiency~.), train[, -j], test[, -j],test$AverageELAProficiency, 
+                                    mtry = as.integer(rf_obj_ELA$best.parameters[1]),
+                                    ntree = as.integer(rf_obj_ELA$best.parameters[2]))
 
 
 ## Predicting values for test set

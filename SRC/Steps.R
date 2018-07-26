@@ -27,18 +27,7 @@ df_exp$AverageELAProficiency= as.numeric(as.character(df_exp$AverageELAProficien
 df_exp$AverageMathProficiency= as.numeric(as.character(df_exp$AverageMathProficiency))
 
 df_exp = filter_top_cities(df_exp)
-## Till here it's cleaned data
-## Keeping only AverageELA as y 
-df_exp = keep_only_oneY(df_exp, y_variable_str = "EconomicNeedIndex")
-
-## Some extra cleaning required on inspection
-# df_exp = df_exp[, -c(1:3)]
-# df_exp =df_exp[, -2] # Remove SED Code
-
-## Creating train data and test data
-## Splitting data in train and test
-## Removing the variables which aren't needed in the model
-cols_not_needed = c("AdjustedGrade", "New", "OtherLocationCodeinLCGMS","SEDCode", "SchoolName","LocationCode", "District", "AddressFull", "Grades", "Zip", "GradeLow", 
+cols_not_needed = c("AdjustedGrade", "New", "OtherLocationCodeinLCGMS","SEDCode", "LocationCode", "District", "AddressFull", "Grades", "Zip", "GradeLow", 
                     "GradeHigh", "RigorousInstructionRating", "CollaborativeTeachersRating", 
                     "SupportiveEnvironmentRating", "EffectiveSchoolLeadershipRating", 
                     "StrongFamilyCommunityTiesRating", "TrustRating","StudentAchievementRating" ,"AverageMathProficiency")
@@ -51,6 +40,19 @@ for (col in 1:length(cols_not_needed)){
 }
 
 df_model = df_exp[, -vec]
+write.csv(df_model, file = 'cleaned_data.csv')
+## Till here it's cleaned data
+## Keeping only AverageELA as y 
+df_exp = keep_only_oneY(df_exp, y_variable_str = "EconomicNeedIndex")
+
+## Some extra cleaning required on inspection
+# df_exp = df_exp[, -c(1:3)]
+# df_exp =df_exp[, -2] # Remove SED Code
+
+## Creating train data and test data
+## Splitting data in train and test
+## Removing the variables which aren't needed in the model
+
 set.seed(222)
 tr = sample(1:nrow(df_model), 500)
 train = df_model[tr, ]
