@@ -1,5 +1,5 @@
 # PASSNYC-Data-Science-for-good
-This project is a part of our curriculum of Predictive Modeling course(WIP) taught by Prof. Carlos Carvalho(https://faculty.mccombs.utexas.edu/carlos.carvalho/)
+This project is a part of our curriculum of Predictive Modeling course taught by Prof. Carlos Carvalho(https://faculty.mccombs.utexas.edu/carlos.carvalho/)
 
 # Overview
 PASSNYC is a not-for-profit organization that facilitates a collective impact that is dedicated to broadening educational opportunities for New York City's talented and underserved students. New York City is home to some of the most impressive educational institutions in the world, yet in recent years, the City’s specialized high schools - institutions with historically transformative impact on student outcomes - have seen a shift toward more homogeneous student body demographics.
